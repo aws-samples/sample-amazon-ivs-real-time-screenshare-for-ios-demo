@@ -21,7 +21,7 @@ This sample code is intended to demonstrate Amazon IVS capabilities and should b
 
 ## Prerequisites
 
-Get stage token
+A valid [Amazon IVS stage token](https://docs.aws.amazon.com/ivs/latest/RealTimeUserGuide/getting-started.html).
 
 ## Setup
 
