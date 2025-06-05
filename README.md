@@ -2,6 +2,8 @@
 
 A demo SwiftUI iPhone application intended as an educational tool to demonstrate how you can share you device screen to an Amazon IVS Stage.
 
+![A screenshot of the application](./app-screenshot.png)
+
 >[!CAUTION]
 > **Use at Your Own Risk: This is a starting code sample designed to help developers get started with basic functionality. It is not production-ready and will require additional development work to be suitable for production use. This sample is not intended to bridge that gap - significant optimization and memory management improvements will be needed for any production implementation.**
 >It is **not** intended for production use. Its primary goal is to help you understand the concepts and capabilities of Amazon IVS. By using this solution, you understand and accept its risks and limitations.
