@@ -12,6 +12,8 @@ class SampleHandler: RPBroadcastSampleHandler {
     private var stage: IVSStage?
     private let userDefaults = UserDefaults(suiteName: Constants.appGroupName)
 
+    private var shouldPublish: Bool = false
+
     private var token: String
     // Video
     private var customImageSource: IVSCustomImageSource
@@ -74,9 +76,21 @@ class SampleHandler: RPBroadcastSampleHandler {
     }
 
     override func broadcastFinished() {
-        stopStream()
-        stage?.leave()
-        stage = nil
+        // User has requested to finish the broadcast
+        print("ℹ️ 🖥️ Stopping stream and leaving stage...")
+        let semaphore = DispatchSemaphore(value: 0)
+
+        stopStreamAndLeave {
+            print("✅ 🖥️ Stream stopped and stage left")
+            semaphore.signal()
+        }
+
+        let timeoutResult = semaphore.wait(timeout: .now() + 5.0)
+        if timeoutResult == .timedOut {
+            print("⚠️ 🖥️ Stopping stream and leaving stage timed out")
+        } else {
+            print("✅ 🖥️ Exiting broadcastFinished successfully")
+        }
     }
 
     override func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, with sampleBufferType: RPSampleBufferType) {
@@ -108,12 +122,12 @@ class SampleHandler: RPBroadcastSampleHandler {
                 customMicSource.onSampleBuffer(sampleBuffer)
 
             @unknown default:
-                NSLog("❌ Unknown RPSampleBufferType: \(sampleBufferType)")
+                NSLog("❌ 🖥️ Unknown RPSampleBufferType: \(sampleBufferType)")
         }
     }
 
     private func startStream() {
-        print("ℹ️ Staring replay kit stream...")
+        print("ℹ️ 🖥️ Staring replay kit stream...")
         do {
             stage = try IVSStage(token: token, strategy: self)
             try stage?.join()
@@ -122,15 +136,29 @@ class SampleHandler: RPBroadcastSampleHandler {
             // Notify app through user defaults that session started
             userDefaults?.setValue(true, forKey: Constants.kReplayKitSessionHasBeenStarted)
         } catch {
-            NSLog("❌ Failed to join stage: \(error.localizedDescription)")
+            NSLog("❌ 🖥️ Failed to join stage: \(error.localizedDescription)")
             userDefaults?.setValue(false, forKey: Constants.kReplayKitSessionHasBeenStarted)
         }
     }
 
-    private func stopStream() {
-        print("ℹ️ stopping replay kit stream")
-        userDefaults?.setValue(false, forKey: Constants.kReplayKitSessionHasBeenStarted)
-        stage?.leave()
+    private func stopStreamAndLeave(completion: @escaping () -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            print("ℹ️ 🖥️ stopping replay kit stream")
+
+            // Update stage strategy
+            self.shouldPublish = false
+            self.stage?.refreshStrategy()
+
+            // Notify app through user defaults that session ended
+            self.userDefaults?.setValue(false, forKey: Constants.kReplayKitSessionHasBeenStarted)
+
+            self.stage?.leave()
+            self.stage = nil
+
+            Thread.sleep(forTimeInterval: 1.5)
+
+            completion()
+        }
     }
 }
 
@@ -150,10 +178,10 @@ extension SampleHandler: IVSStageStrategy {
 
 extension SampleHandler: IVSStageRenderer {
     func stage(_ stage: IVSStage, didChange connectionState: IVSStageConnectionState, withError error: (any Error)?) {
-        print("ℹ️ Replay kit stage connection state changed: \(connectionState.rawValue)")
+        print("ℹ️ 🖥️ Replay kit stage connection state changed: \(connectionState.rawValue)")
 
         if let error = error {
-            print("❌ Replay kit stage connection error: \(error)")
+            print("❌ 🖥️ Replay kit stage connection error: \(error)")
             userDefaults?.setValue(error.localizedDescription, forKey: Constants.kReplayKitSessionError)
         }
     }
