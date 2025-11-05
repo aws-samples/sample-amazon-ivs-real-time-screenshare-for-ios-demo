@@ -3,7 +3,7 @@ platform :ios, '14.0'
 workspace 'ScreenSharing'
 
 def amazonIVS
-    pod 'AmazonIVSBroadcast/Stages', '~> 1.32.1'
+    pod 'AmazonIVSBroadcast/Stages', '~> 1.35.0'
 end
 
 target 'ScreenSharing' do
